@@ -2,42 +2,24 @@ category "Docker Host"
 
 describe_samples do
   processes = process.list.sort_by(&:mem_usage_rss)
-  dimensions = {InstanceId: ec2.instance_id}
-  sample(
-    name: "Load Per CPU",
-    value: 100 * system.loadavg5 / system.cpucount,
-    unit: "Percent",
-    dimensions: dimensions,
-  )
-  sample(
-    name: "Pending IO",
-    value: system.iostat[8],
-    unit: "Count",
-    dimensions: dimensions,
-  )
-  sample(
-    name: "Memory Utilization",
-    value: 100 * memory.MemUsed / memory.MemTotal,
-    unit: "Percent",
-    dimensions: dimensions
-  )
-  sample(
-    name: "Largest Process Size",
-    value: processes.last.mem_usage_rss / 1024**2,
-    unit: "Megabytes",
-    dimensions: dimensions,
-  )
+  data = [
+    ["Load Per CPU", "Percent", 100 * system.loadavg5 / system.cpucount],
+    ["Pending I/O", "Count", system.iostat[8]],
+    ["Memory Utilization", "Percent", 100 * memory.MemUsed / memory.MemTotal],
+    ["Largest Process Size", "Megabytes", processes.last.mem_usage_rss / 1024**2],
+  ]
   {
     "Background" => "B|",
     "Web" => "unicorn_rails ",
   }.each do |type, prefix|
     if process = processes.select {|p| p.cmdline.start_with?(prefix) }.last
-      sample(
-        name: "Largest #{type} Worker Size",
-        value: process.mem_usage_rss / 1024**2,
-        unit: "Megabytes",
-        dimensions: dimensions,
-      )
+      data << ["Largest #{type} Worker Size", "Megabytes", process.mem_usage_rss / 1024**2]
     end
+  end
+
+  dimensions = {InstanceId: ec2.instance_id}
+  data.each do |name, unit, value|
+    sample(name: name, unit: unit, value: value, dimensions: {})
+    sample(name: name, unit: unit, value: value, dimensions: dimensions)
   end
 end
