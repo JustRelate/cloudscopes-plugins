@@ -47,7 +47,7 @@ class LastEvent
     if aws_expects_running_here? && !running?
       # the inspected event is still the last event of the execution
       if event.id == current_last_event_of_execution.id
-        reporter.log("[#{Time.now}] Zombie | #{log_data.join(" | ")}")
+        reporter.log.info("Zombie | #{log_data.join(" | ")}")
         true
       end
     end
@@ -138,9 +138,10 @@ end
 def log_waiting(limit)
   waiting.each do |app, messages|
     next if messages.count < limit
-    prefix = "[#{Time.now} Waiting]"
-    continued = "\n ...#{" " * (prefix.length - 3)}"
-    log "#{prefix} app: #{app} | count: #{messages.count}#{continued}#{messages.join(continued)}"
+    prefix = "[Waiting]"
+    continued = "\n ...      "
+    log.info(
+        "#{prefix} app: #{app} | count: #{messages.count}#{continued}#{messages.join(continued)}")
   end
 end
 
@@ -165,7 +166,7 @@ def swf
 end
 
 def domain
-  ENV['CS_NTSWF_DOMAIN']
+  @domain ||= ENV['CS_NTSWF_DOMAIN']
 end
 
 def open_executions
@@ -196,29 +197,31 @@ end
 category "NTSWF"
 
 describe_samples do
-  open_executions.each do |execution_info|
-    last_event = LastEvent.new(execution_info.execution, swf, domain, self)
+  if domain
+    open_executions.each do |execution_info|
+      last_event = LastEvent.new(execution_info.execution, swf, domain, self)
 
-    app = app_name(last_event)
-    statistics[app][metric_name("open")] += 1
-    case last_event.event_type
-    when "DecisionTaskScheduled"
-      last_event.remember_waiting
-      statistics[app][metric_name("waiting")] += 1
-      statistics[app][metric_name("waiting_decision")] += 1
-    when "ActivityTaskScheduled"
-      last_event.remember_waiting
-      statisticsapp[metric_name("waiting")] += 1
-      statistics[metric_name("waiting_activity")] += 1
-    when "ActivityTaskStarted", "DecisionTaskStarted"
-      statistics[app][metric_name("zombie")] += 1 if last_event.zombie?
+      app = app_name(last_event)
+      statistics[app][metric_name("open")] += 1
+      case last_event.event_type
+      when "DecisionTaskScheduled"
+        last_event.remember_waiting
+        statistics[app][metric_name("waiting")] += 1
+        statistics[app][metric_name("waiting_decision")] += 1
+      when "ActivityTaskScheduled"
+        last_event.remember_waiting
+        statisticsapp[metric_name("waiting")] += 1
+        statistics[metric_name("waiting_activity")] += 1
+      when "ActivityTaskStarted", "DecisionTaskStarted"
+        statistics[app][metric_name("zombie")] += 1 if last_event.zombie?
+      end
     end
-  end
-  log_waiting(3)
-  statistics.each do |app, metrics|
-    dimensions = {AppName: app}
-    metrics.each do |name, value|
-      sample(name: name, value: value, dimensions: dimensions)
+    log_waiting(3)
+    statistics.each do |app, metrics|
+      dimensions = {AppName: app}
+      metrics.each do |name, value|
+        sample(name: name, value: value, dimensions: dimensions)
+      end
     end
   end
 end
