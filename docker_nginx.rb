@@ -1,0 +1,43 @@
+attr_accessor :last_requests, :last_request_time
+
+category "Docker Nginx"
+
+describe_samples do
+  if container_filter = ENV['CS_DOCKER_NGINX_NAME_FILTER']
+    container_ids = docker.ps(name_filter: container_filter)
+    instance_id = ec2.instance_id
+    container_ids.each do |c_id|
+      total, reading, writing, waiting, requests = nil
+      request_time = Time.now
+      docker.exec(c_id, 'wget', '-qO', '-', '127.0.0.1/nginx_status').split("\n").each do |line|
+        total = $1.to_i if line =~ /^Active connections:\s+(\d+)/
+        if line =~ /^Reading:\s+(\d+).*Writing:\s+(\d+).*Waiting:\s+(\d+)/
+          reading = $1.to_i
+          writing = $2.to_i
+          waiting = $3.to_i
+        end
+        requests = $3.to_i if line =~ /^\s+(\d+)\s+(\d+)\s+(\d+)/
+      end
+
+      if last_requests
+        requests_per_second = (requests - last_requests) / (request_time - last_request_time)
+      end
+      self.last_requests = requests
+      self.last_request_time = request_time
+
+      data = [
+        ["Active Connections", "Count", total],
+        ["Keep-Alive Connections", "Count", waiting],
+        ["Reading Connections", "Count", reading],
+        ["Writing Connections", "Count", writing],
+        ["Requests Handled", "Count", requests],
+        ["Request Throughput", "Count/Second", requests_per_second],
+      ]
+      dimensions = {InstanceId: instance_id, ContainerId: c_id}
+      data.each do |name, unit, value|
+        sample(name: name, unit: unit, value: value, dimensions: {})
+        sample(name: name, unit: unit, value: value, dimensions: dimensions)
+      end
+    end
+  end
+end
