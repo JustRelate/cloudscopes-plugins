@@ -27,7 +27,7 @@ class LastEvent
       end
 
       def container_ids
-        @container_ids ||= `sudo /usr/bin/docker ps --filter name=background-worker --quiet`.split
+        @container_ids ||= docker.ps(name_filter: 'background-worker')
       end
     end
   end
@@ -54,7 +54,8 @@ class LastEvent
   end
 
   def running?
-    system("sudo /usr/bin/docker exec #{identity.container_id} test -e /proc/#{identity.pid}")
+    docker.exec(identity.container_id, "test", "-e", "/proc/#{identity.pid}")
+    $?.success?
   end
 
   def computed_app_name
