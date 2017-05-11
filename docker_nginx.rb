@@ -25,19 +25,13 @@ describe_samples do
       self.last_requests = requests
       self.last_request_time = request_time
 
-      data = [
-        ["Active Connections", "Count", total],
-        ["Keep-Alive Connections", "Count", waiting],
-        ["Reading Connections", "Count", reading],
-        ["Writing Connections", "Count", writing],
-        ["Requests Handled", "Count", requests],
-        ["Request Throughput", "Count/Second", requests_per_second],
-      ]
-      dimensions = {InstanceId: instance_id, ContainerId: c_id}
-      data.each do |name, unit, value|
-        sample(name: name, unit: unit, value: value, dimensions: {})
-        sample(name: name, unit: unit, value: value, dimensions: dimensions)
-      end
+      opts = {aggregate: true, dimensions: {InstanceId: instance_id, ContainerId: c_id}}
+      sample(**opts, name: "Active Connections", unit: "Count", value: total)
+      sample(**opts, name: "Keep-Alive Connections", unit: "Count", value: waiting)
+      sample(**opts, name: "Reading Connections", unit: "Count", value: reading)
+      sample(**opts, name: "Writing Connections", unit: "Count", value: writing)
+      sample(**opts, name: "Requests Handled", unit: "Count", value: requests)
+      sample(**opts, name: "Request Throughput", unit: "Count/Second", value: requests_per_second)
     end
   end
 end

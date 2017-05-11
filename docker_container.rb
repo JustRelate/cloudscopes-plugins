@@ -9,15 +9,10 @@ describe_samples do
           *docker.exec(c_id, "df", "-i", "/").split("\n").last.split.map(&:to_i)
       total, used, avail =
           *docker.exec(c_id, "df", "-B", "1", "/").split("\n").last.split.map(&:to_i)
-      data = [
-        ["FS Inode Usage", "Percent", i_used.to_f / i_total * 100],
-        ["FS Space Usage", "Percent", used.to_f / total * 100],
-      ]
-      dimensions = {InstanceId: instance_id, ContainerId: c_id}
-      data.each do |name, unit, value|
-        sample(name: name, unit: unit, value: value, dimensions: {})
-        sample(name: name, unit: unit, value: value, dimensions: dimensions)
-      end
+
+      opts = {aggregate: true, dimensions: {InstanceId: instance_id, ContainerId: c_id}}
+      sample(**opts, name: "FS Inode Usage", unit: "Percent", value: i_used.to_f / i_total * 100)
+      sample(**opts, name: "FS Space Usage", unit: "Percent", value: used.to_f / total * 100)
     end
   end
 end
