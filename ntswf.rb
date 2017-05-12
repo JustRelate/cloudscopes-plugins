@@ -194,6 +194,11 @@ def statistics
   end
 end
 
+def reset
+  @waiting = nil
+  @statistics = nil
+end
+
 
 category "NTSWF"
 
