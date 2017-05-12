@@ -27,7 +27,7 @@ class LastEvent
       end
 
       def container_ids
-        @container_ids ||= docker.ps(name_filter: 'background-worker')
+        @container_ids ||= Cloudscopes.docker.ps(name_filter: 'background-worker')
       end
     end
   end
@@ -54,7 +54,7 @@ class LastEvent
   end
 
   def running?
-    docker.exec(identity.container_id, "test", "-e", "/proc/#{identity.pid}")
+    Cloudscopes.docker.exec(identity.container_id, "test", "-e", "/proc/#{identity.pid}")
     $?.success?
   end
 
