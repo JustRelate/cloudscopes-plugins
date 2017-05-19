@@ -25,4 +25,10 @@ describe_samples do
   space_usage = (data.blocks - data.blocks_available) * 100.0 / data.blocks
   sample(**opts, name: "Boot-FS Inode Usage", unit: "Percent", value: inode_usage)
   sample(**opts, name: "Boot-FS Space Usage", unit: "Percent", value: space_usage)
+
+  data = JSON.parse(`lvdisplay -C --reportformat json docker`)['report'].first['lv'].first
+  sample(**opts,
+      name: "Docker Storage Usage (data)", unit: "Percent", value: data['data_percent'].to_f)
+  sample(**opts, name: "Docker Storage Usage (metadata)",
+      unit: "Percent", value: data['metadata_percent'].to_f)
 end
