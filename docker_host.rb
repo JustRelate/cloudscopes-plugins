@@ -19,4 +19,10 @@ describe_samples do
           unit: "Megabytes", value: process.mem_usage_rss / 1024**2)
     end
   end
+
+  data = filesystem.df("/")
+  inode_usage = (data.files - data.files_available) * 100.0 / data.files
+  space_usage = (data.blocks - data.blocks_available) * 100.0 / data.blocks
+  sample(**opts, name: "Boot-FS Inode Usage", unit: "Percent", value: inode_usage)
+  sample(**opts, name: "Boot-FS Space Usage", unit: "Percent", value: space_usage)
 end
