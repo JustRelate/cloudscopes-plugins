@@ -25,7 +25,14 @@ describe_samples do
       self.last_requests = requests
       self.last_request_time = request_time
 
-      opts = {aggregate: true, dimensions: {InstanceId: instance_id, ContainerId: c_id}}
+      aggregation_dimensions = {}
+      if aggregation_group = ENV['CS_AGGREGATION_GROUP']
+        aggregation_dimensions[:group] = aggregation_group
+      end
+      opts = {
+        aggregate: aggregation_dimensions,
+        dimensions: {InstanceId: instance_id, ContainerId: c_id},
+      }
       sample(**opts, name: "Active Connections", unit: "Count", value: total)
       sample(**opts, name: "Keep-Alive Connections", unit: "Count", value: waiting)
       sample(**opts, name: "Reading Connections", unit: "Count", value: reading)

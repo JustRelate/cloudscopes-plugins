@@ -2,7 +2,14 @@ category "Docker Host"
 
 describe_samples do
   processes = process.list.sort_by(&:mem_usage_rss)
-  opts = {aggregate: true, dimensions: {InstanceId: ec2.instance_id}}
+  aggregation_dimensions = {}
+  if aggregation_group = ENV['CS_AGGREGATION_GROUP']
+    aggregation_dimensions[:group] = aggregation_group
+  end
+  opts = {
+    aggregate: aggregation_dimensions,
+    dimensions: {InstanceId: ec2.instance_id},
+  }
   sample(**opts,
       name: "Load Per CPU", unit: "Percent", value: 100 * system.loadavg5 / system.cpucount)
   sample(**opts, name: "Pending I/O", unit: "Count", value: system.iostat[8])

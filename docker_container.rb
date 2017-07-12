@@ -10,7 +10,14 @@ describe_samples do
       total, used, avail =
           *docker.exec(c_id, "df", "-B", "1", "/").split("\n").last.split.map(&:to_i)
 
-      opts = {aggregate: true, dimensions: {InstanceId: instance_id, ContainerId: c_id}}
+      aggregation_dimensions = {}
+      if aggregation_group = ENV['CS_AGGREGATION_GROUP']
+        aggregation_dimensions[:group] = aggregation_group
+      end
+      opts = {
+        aggregate: aggregation_dimensions,
+        dimensions: {InstanceId: instance_id, ContainerId: c_id},
+      }
       sample(**opts, name: "FS Inode Usage", unit: "Percent", value: i_used.to_f / i_total * 100)
       sample(**opts, name: "FS Space Usage", unit: "Percent", value: used.to_f / total * 100)
     end
