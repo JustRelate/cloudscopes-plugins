@@ -18,7 +18,7 @@ describe_samples do
   sample(**opts, name: "Largest Process Size",
       unit: "Megabytes", value: processes.last.mem_usage_rss / 1024**2)
   {
-    "Background" => "B|",
+    "Background" => "resque-",
     "Web" => "unicorn_rails ",
   }.each do |type, prefix|
     if process = processes.select {|p| p.cmdline.start_with?(prefix) }.last
