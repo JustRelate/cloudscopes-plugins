@@ -25,6 +25,18 @@ describe_samples do
       self.last_requests = requests
       self.last_request_time = request_time
 
+      unicorn_active = unicorn_queued = 0
+      docker.exec(c_id, 'cat', '/proc/net/unix').split("\n").each do |line|
+        if line =~ %r|/unicorn.sock$|
+          _, _, _, _, _, _, inode, _ = line.split(' ')
+          if inode == "0"
+            unicorn_queued += 1
+          else
+            unicorn_active += 1
+          end
+        end
+      end
+
       aggregation_dimensions = {}
       if aggregation_group = ENV['CS_AGGREGATION_GROUP']
         aggregation_dimensions[:group] = aggregation_group
@@ -39,6 +51,8 @@ describe_samples do
       sample(**opts, name: "Writing Connections", unit: "Count", value: writing)
       sample(**opts, name: "Requests Handled", unit: "Count", value: requests)
       sample(**opts, name: "Request Throughput", unit: "Count/Second", value: requests_per_second)
+      sample(**opts, name: "Active Unicorn Connections", unit: "Count", value: unicorn_active)
+      sample(**opts, name: "Queued Unicorn Connections", unit: "Count", value: unicorn_queued)
     end
   end
 end
