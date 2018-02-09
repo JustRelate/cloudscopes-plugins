@@ -2,6 +2,8 @@ attr_accessor :last_requests, :last_request_time
 
 category "Docker Nginx"
 
+sample_interval 10
+
 describe_samples do
   if container_filter = ENV['CS_DOCKER_NGINX_NAME_FILTER']
     container_ids = docker.ps(name_filter: container_filter)
@@ -51,8 +53,10 @@ describe_samples do
       sample(**opts, name: "Writing Connections", unit: "Count", value: writing)
       sample(**opts, name: "Requests Handled", unit: "Count", value: requests)
       sample(**opts, name: "Request Throughput", unit: "Count/Second", value: requests_per_second)
-      sample(**opts, name: "Active Unicorn Connections", unit: "Count", value: unicorn_active)
-      sample(**opts, name: "Queued Unicorn Connections", unit: "Count", value: unicorn_queued)
+      sample(**opts, name: "Active Unicorn Connections", unit: "Count", value: unicorn_active,
+          storage_resolution: 1)
+      sample(**opts, name: "Queued Unicorn Connections", unit: "Count", value: unicorn_queued,
+          storage_resolution: 1)
     end
   end
 end
