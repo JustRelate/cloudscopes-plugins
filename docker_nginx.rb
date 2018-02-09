@@ -53,6 +53,8 @@ describe_samples do
       sample(**opts, name: "Writing Connections", unit: "Count", value: writing)
       sample(**opts, name: "Requests Handled", unit: "Count", value: requests)
       sample(**opts, name: "Request Throughput", unit: "Count/Second", value: requests_per_second)
+
+      opts[:dimensions] = {ClusterName: ENV['ECS_CLUSTER']}
       sample(**opts, name: "Active Unicorn Connections", unit: "Count", value: unicorn_active,
           storage_resolution: 1)
       sample(**opts, name: "Queued Unicorn Connections", unit: "Count", value: unicorn_queued,
