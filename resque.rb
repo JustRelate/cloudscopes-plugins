@@ -12,12 +12,11 @@ describe_samples do
   queue_sizes = ::Resque.queue_sizes
   queue_name_prefix = "#{cluster.rpartition('-').last}_"
   queue_sizes.select! {|k, _| k.start_with?(queue_name_prefix) }
-  queue_names = queue_sizes.keys
   pending = queue_sizes.values.reduce(&:+) || 0
-  workers = ::Resque.workers.select {|w| queue_names.any? {|name| w.queues.include?(name) } }
+  workers = ::Resque.workers.select {|w| w.queues.any? {|q| q.start_with?(queue_name_prefix)} }
 
   delayed = ::Resque.find_delayed_selection do |args|
-    args.any? {|arg| Hash === arg && queue_names.include?(arg['queue_name']) }
+    args.any? {|arg| Hash === arg && arg['queue_name'].start_with?(queue_name_prefix) }
   end.count
 
   opts = {aggregate: {}, dimensions: {ClusterName: cluster}}
