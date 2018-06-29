@@ -27,14 +27,14 @@ describe_samples do
       self.last_requests = requests
       self.last_request_time = request_time
 
-      unicorn_active = unicorn_queued = 0
+      rack_active = rack_queued = 0
       docker.exec(c_id, 'cat', '/proc/net/unix').split("\n").each do |line|
-        if line =~ %r|/unicorn.sock$|
+        if line =~ %r[/(unicorn|puma).sock$]
           _, _, _, _, _, _, inode, _ = line.split(' ')
           if inode == "0"
-            unicorn_queued += 1
+            rack_queued += 1
           else
-            unicorn_active += 1
+            rack_active += 1
           end
         end
       end
@@ -55,9 +55,9 @@ describe_samples do
       sample(**opts, name: "Request Throughput", unit: "Count/Second", value: requests_per_second)
 
       opts[:dimensions] = {ClusterName: ENV['ECS_CLUSTER']}
-      sample(**opts, name: "Active Unicorn Connections", unit: "Count", value: unicorn_active,
+      sample(**opts, name: "Active Rack Connections", unit: "Count", value: rack_active,
           storage_resolution: 1)
-      sample(**opts, name: "Queued Unicorn Connections", unit: "Count", value: unicorn_queued,
+      sample(**opts, name: "Queued Rack Connections", unit: "Count", value: rack_queued,
           storage_resolution: 1)
     end
   end
