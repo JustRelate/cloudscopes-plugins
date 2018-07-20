@@ -8,9 +8,8 @@ sample_interval 10
 Resque.redis = Redis.new
 
 describe_samples do
-  cluster = ENV['ECS_CLUSTER']
   queue_sizes = ::Resque.queue_sizes
-  queue_name_prefix = "#{cluster.rpartition('-').last}_"
+  queue_name_prefix = "#{ec2.ecs_cluster.rpartition('-').last}_"
   queue_sizes.select! {|k, _| k.start_with?(queue_name_prefix) }
   pending = queue_sizes.values.reduce(&:+) || 0
   workers = ::Resque.workers.select {|w| w.queues.any? {|q| q.start_with?(queue_name_prefix)} }
@@ -19,7 +18,7 @@ describe_samples do
     args.any? {|arg| Hash === arg && arg['queue_name'].start_with?(queue_name_prefix) }
   end.count
 
-  opts = {aggregate: {}, dimensions: {ClusterName: cluster}}
+  opts = {aggregate: {}, dimensions: {ClusterName: ec2.ecs_cluster}}
 
   sample(**opts, name: "Working", unit: "Count", value: workers.count(&:working?))
   sample(**opts, name: "Workers", unit: "Count", value: workers.count)
