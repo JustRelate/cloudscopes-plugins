@@ -14,6 +14,15 @@ describe_samples do
   pending = queue_sizes.values.reduce(&:+) || 0
   workers = ::Resque.workers.select {|w| w.queues.any? {|q| q.start_with?(queue_name_prefix)} }
 
+  ::Resque::Worker.all_workers_with_expired_heartbeats.each do |worker|
+    next unless workers.include?(worker)
+
+    # prune code copied from ::Resque::Worker#prune_dead_workers which does too many other things
+    job_class = worker.job(false)['payload']['class'] rescue nil
+    worker.unregister_worker(::Resque::PruneDeadWorkerDirtyExit.new(worker.to_s, job_class))
+    workers -= [worker]
+  end
+
   delayed = ::Resque.find_delayed_selection do |args|
     args.any? {|arg| Hash === arg && arg['queue_name'].start_with?(queue_name_prefix) }
   end.count
