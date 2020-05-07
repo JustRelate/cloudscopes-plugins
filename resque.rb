@@ -22,6 +22,7 @@ describe_samples do
     worker.unregister_worker(::Resque::PruneDeadWorkerDirtyExit.new(worker.to_s, job_class))
     workers -= [worker]
   end
+  working = workers.count(&:working?)
 
   delayed = ::Resque.find_delayed_selection do |args|
     args.any? {|arg| Hash === arg && arg['queue_name'].start_with?(queue_name_prefix) }
@@ -29,13 +30,9 @@ describe_samples do
 
   opts = {aggregate: {}, dimensions: {ClusterName: ec2.ecs_cluster}}
 
-  sample(**opts, name: "Working", unit: "Count", value: workers.count(&:working?))
-  sample(**opts, name: "Workers", unit: "Count", value: workers.count)
+  sample(**opts, name: "Working", unit: "Count", value: working, storage_resolution: 1)
+  sample(**opts, name: "Working low-res", unit: "Count", value: working)
   sample(**opts, name: "Pending", unit: "Count", value: pending, storage_resolution: 1)
-  if workers.count > 0
-    sample(**opts, name: "Pending per Worker", unit: "Count", value: pending.to_f / workers.count,
-        storage_resolution: 1)
-  end
-
+  sample(**opts, name: "Pending low-res", unit: "Count", value: pending)
   sample(**opts, name: "Delayed", unit: "Count", value: delayed)
 end
