@@ -24,12 +24,15 @@ describe_samples do
     worker.unregister_worker(::Resque::PruneDeadWorkerDirtyExit.new(worker.to_s, job_class))
     workers -= [worker]
   end
-  working_per_queues = Hash.new(0)
+  working_per_queues = {}
   working = 0
-  workers.select(&:working?).each do |w|
+  workers.each do |w|
     key = w.queues.map {|n| n[queue_name_prefix.size..-1] }.sort.join(", ")
-    working_per_queues[key] += 1
-    working += 1
+    working_per_queues[key] ||= 0
+    if w.working?
+      working_per_queues[key] += 1
+      working += 1
+    end
   end
 
   delayed_per_queue = Hash.new(0)
