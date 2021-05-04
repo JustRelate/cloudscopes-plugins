@@ -24,19 +24,28 @@ describe_samples do
   free_capacity = parsed.map(&:first).sum
   max_capacity = parsed.map(&:last).sum
 
+  names_and_values = []
+  names_and_values << ["Puma Free Capacity", free_capacity]
+  names_and_values << ["Puma Max Capacity", max_capacity]
+  names_and_values << ["Puma Used Capacity", max_capacity - free_capacity]
+  if max_capacity.positive?
+    relative_capacity = free_capacity / max_capacity.to_f
+    names_and_values << ["Puma Free Relative Capacity", relative_capacity]
+  end
+
   aggregation_dimensions = {}
   if (aggregation_group = ENV['CS_AGGREGATION_GROUP'])
     aggregation_dimensions[:group] = aggregation_group
   end
-  opts = {
-    aggregate: aggregation_dimensions,
-    dimensions: {ClusterName: ec2.ecs_cluster},
-  }
-  sample(**opts, name: "Puma Free Capacity", unit: "Count", value: free_capacity, storage_resolution: 1)
-  sample(**opts, name: "Puma Max Capacity", unit: "Count", value: max_capacity, storage_resolution: 1)
-  sample(**opts, name: "Puma Used Capacity", unit: "Count", value: max_capacity - free_capacity, storage_resolution: 1)
-  if max_capacity.positive?
-    relative_capacity = free_capacity / max_capacity.to_f
-    sample(**opts, name: "Puma Free Relative Capacity", unit: "Count", value: relative_capacity, storage_resolution: 1)
+
+  names_and_values.each do |(name, value)|
+    sample(
+      aggregate: aggregation_dimensions,
+      dimensions: {ClusterName: ec2.ecs_cluster},
+      name: name,
+      storage_resolution: 1,
+      unit: "Count",
+      value: value
+    )
   end
 end
