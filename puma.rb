@@ -29,12 +29,12 @@ describe_samples do
   max_capacity = parsed.map(&:last).map(&:to_i).sum
 
   names_and_values = []
-  names_and_values << ["Puma Free Capacity", free_capacity, "Count"]
-  names_and_values << ["Puma Max Capacity", max_capacity, "Count"]
-  names_and_values << ["Puma Used Capacity", max_capacity - free_capacity, "Count"]
+  names_and_values << ["Free Capacity", free_capacity, "Count"]
+  names_and_values << ["Max Capacity", max_capacity, "Count"]
+  names_and_values << ["Used Capacity", max_capacity - free_capacity, "Count"]
   if max_capacity.positive?
     relative_capacity = 100.0 * free_capacity / max_capacity.to_f
-    names_and_values << ["Puma Free Relative Capacity", relative_capacity, "Percent"]
+    names_and_values << ["Free Relative Capacity", relative_capacity, "Percent"]
   end
 
   names_and_values.each do |(name, value, unit)|
