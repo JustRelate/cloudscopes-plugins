@@ -31,18 +31,6 @@ describe_samples do
   self.last_requests = requests
   self.last_request_time = request_time
 
-  rack_active = rack_queued = 0
-  `cat /proc/net/unix`.split("\n").each do |line|
-    next unless line =~ %r{/(unicorn|puma).sock$}
-
-    _, _, _, _, _, _, inode, = line.split(' ')
-    if inode == "0"
-      rack_queued += 1
-    else
-      rack_active += 1
-    end
-  end
-
   [
     ["Active Connections", total],
     ["Keep-Alive Connections", waiting],
@@ -59,22 +47,6 @@ describe_samples do
       dimensions: {
         ClusterName: ec2.ecs_cluster,
         Task: ec2.ecs_task,
-      }
-    )
-  end
-
-  [
-    ["Active Rack Connections", rack_active],
-    ["Queued Rack Connections", rack_queued]
-  ].each do |(name, value)|
-    sample(
-      name: name,
-      value: value,
-      unit: "Count",
-      storage_resolution: 1,
-      aggregate: aggregation_dimensions,
-      dimensions: {
-        ClusterName: ec2.ecs_cluster,
       }
     )
   end
