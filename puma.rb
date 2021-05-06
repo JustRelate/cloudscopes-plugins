@@ -21,8 +21,8 @@ describe_samples do
   # indicate unexpected stats by not reporting the sample
   next if parsed.empty?
 
-  free_capacity = parsed.map(&:first).sum
-  max_capacity = parsed.map(&:last).sum
+  free_capacity = parsed.map(&:first).map(&:to_i).sum
+  max_capacity = parsed.map(&:last).map(&:to_i).sum
 
   names_and_values = []
   names_and_values << ["Puma Free Capacity", free_capacity]
