@@ -7,6 +7,10 @@ category "Docker Nginx"
 sample_interval 10
 
 describe_samples do
+  aggregation_dimensions = {
+    group: ENV['CS_AGGREGATION_GROUP'],
+  }.compact
+
   total, reading, writing, waiting, requests = nil
   request_time = Time.now
 
@@ -39,10 +43,6 @@ describe_samples do
     end
   end
 
-  aggregation_dimensions = {}
-  if (aggregation_group = ENV['CS_AGGREGATION_GROUP'])
-    aggregation_dimensions[:group] = aggregation_group
-  end
   [
     ["Active Connections", total],
     ["Keep-Alive Connections", waiting],
