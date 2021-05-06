@@ -43,18 +43,39 @@ describe_samples do
   if (aggregation_group = ENV['CS_AGGREGATION_GROUP'])
     aggregation_dimensions[:group] = aggregation_group
   end
-  opts = {
-    aggregate: aggregation_dimensions,
-    dimensions: {ClusterName: ec2.ecs_cluster, Task: ec2.ecs_task},
-  }
-  sample(**opts, name: "Active Connections", unit: "Count", value: total)
-  sample(**opts, name: "Keep-Alive Connections", unit: "Count", value: waiting)
-  sample(**opts, name: "Reading Connections", unit: "Count", value: reading)
-  sample(**opts, name: "Writing Connections", unit: "Count", value: writing)
-  sample(**opts, name: "Requests Handled", unit: "Count", value: requests)
-  sample(**opts, name: "Request Throughput", unit: "Count/Second", value: requests_per_second)
+  [
+    ["Active Connections", total],
+    ["Keep-Alive Connections", waiting],
+    ["Reading Connections", reading],
+    ["Writing Connections", writing],
+    ["Requests Handled", requests],
+    ["Request Throughput", requests_per_second, "Count/Second"]
+  ].each do |(name, value, unit)|
+    sample(
+      name: name,
+      value: value,
+      unit: unit || "Count",
+      aggregate: aggregation_dimensions,
+      dimensions: {
+        ClusterName: ec2.ecs_cluster,
+        Task: ec2.ecs_task,
+      }
+    )
+  end
 
-  opts[:dimensions] = {ClusterName: ec2.ecs_cluster}
-  sample(**opts, name: "Active Rack Connections", unit: "Count", value: rack_active, storage_resolution: 1)
-  sample(**opts, name: "Queued Rack Connections", unit: "Count", value: rack_queued, storage_resolution: 1)
+  [
+    ["Active Rack Connections", rack_active],
+    ["Queued Rack Connections", rack_queued]
+  ].each do |(name, value)|
+    sample(
+      name: name,
+      value: value,
+      unit: "Count",
+      storage_resolution: 1,
+      aggregate: aggregation_dimensions,
+      dimensions: {
+        ClusterName: ec2.ecs_cluster,
+      }
+    )
+  end
 end
