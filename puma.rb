@@ -3,6 +3,10 @@ category "Puma"
 sample_interval 10
 
 describe_samples do
+  aggregation_dimensions = {
+    group: ENV['CS_AGGREGATION_GROUP'],
+  }.compact
+
   stats_file = ENV["PUMA_STATS_FILE_PATH"].to_s
   next if stats_file == ""
 
@@ -31,11 +35,6 @@ describe_samples do
   if max_capacity.positive?
     relative_capacity = 100.0 * free_capacity / max_capacity.to_f
     names_and_values << ["Puma Free Relative Capacity", relative_capacity, "Percent"]
-  end
-
-  aggregation_dimensions = {}
-  if (aggregation_group = ENV['CS_AGGREGATION_GROUP'])
-    aggregation_dimensions[:group] = aggregation_group
   end
 
   names_and_values.each do |(name, value, unit)|
