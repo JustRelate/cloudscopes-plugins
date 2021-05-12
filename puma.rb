@@ -13,6 +13,8 @@ describe_samples do
   next if Time.now - File.mtime(stats_file) > 5
 
   stats = File.read(stats_file)
+  puts("Puma stats content: #{stats}")
+
   unless stats.count("{") == stats.count("}")
     stats = File.read(stats_file)
 
